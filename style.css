@@ -1,0 +1,15 @@
+#saveBtn {
+  margin-top: 20px;
+  background-color: #4ade80;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  color: #fff;
+  font-size: 1em;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+#saveBtn:hover {
+  background-color: #22c55e;
+}
