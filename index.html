@@ -46,7 +46,6 @@
         return;
       }
 
-      // Check for duplicate roll number
       if (students.some(s => s.roll === roll)) {
         alert("Roll Number already exists!");
         return;
@@ -91,12 +90,38 @@
 
       const avgPercentage = ((totalAttended / totalClasses) * 100).toFixed(2);
 
+      // Generate student-wise report table
+      let studentReport = `<table border="1" cellspacing="0" cellpadding="5" style="margin:auto;">
+        <tr>
+          <th>Roll No</th>
+          <th>Student</th>
+          <th>Total</th>
+          <th>Attended</th>
+          <th>Percentage</th>
+          <th>Status</th>
+        </tr>`;
+
+      students.forEach(s => {
+        studentReport += `<tr>
+          <td>${s.roll}</td>
+          <td>${s.name}</td>
+          <td>${s.total}</td>
+          <td>${s.attended}</td>
+          <td>${s.percent}%</td>
+          <td>${s.status}</td>
+        </tr>`;
+      });
+
+      studentReport += `</table>`;
+
       const reportHTML = `
         <h2>📊 Attendance Report</h2>
         <p><strong>Total Students:</strong> ${students.length}</p>
         <p><strong>Total Classes:</strong> ${totalClasses}</p>
         <p><strong>Total Attended:</strong> ${totalAttended}</p>
         <p><strong>Overall Average Attendance:</strong> ${avgPercentage}%</p>
+        <h3>Student-wise Details:</h3>
+        ${studentReport}
       `;
 
       document.getElementById('report').innerHTML = reportHTML;
@@ -104,3 +129,4 @@
   </script>
 </body>
 </html>
+
