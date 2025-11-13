@@ -27,4 +27,7 @@ It provides a basic interface to view and manage student attendance for schools 
 ---
 
 ## 📁 Project Structure
+student-attendance-register/
+ ├── attendance.html
+ ├── README.md
 
