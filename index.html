@@ -4,13 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Student Attendance</title>
-  <link rel="stylesheet" href="style.css">
+  <style>
+    table, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+      padding: 5px;
+    }
+  </style>
 </head>
 <body>
   <h1>Student Attendance System</h1>
 
   <input type="text" id="roll" placeholder="Enter Roll Number">
   <input type="text" id="name" placeholder="Enter Student Name">
+  <input type="text" id="subject" placeholder="Enter Subject">
   <input type="number" id="total" placeholder="Total Classes">
   <input type="number" id="attended" placeholder="Classes Attended">
   <button onclick="addStudent()">Add Student</button>
@@ -20,11 +27,13 @@
     <thead>
       <tr>
         <th>Roll No</th>
-        <th>Student</th>
+        <th>Name</th>
+        <th>Subject</th>
         <th>Total</th>
         <th>Attended</th>
         <th>Percentage</th>
         <th>Status</th>
+        <th>Action</th>
       </tr>
     </thead>
     <tbody id="output"></tbody>
@@ -38,10 +47,11 @@
     function addStudent() {
       const roll = document.getElementById('roll').value.trim();
       const name = document.getElementById('name').value.trim();
+      const subject = document.getElementById('subject').value.trim();
       const total = parseInt(document.getElementById('total').value);
       const attended = parseInt(document.getElementById('attended').value);
 
-      if (!roll || !name || isNaN(total) || isNaN(attended) || total <= 0) {
+      if (!roll || !name || !subject || isNaN(total) || isNaN(attended) || total <= 0) {
         alert("Please fill all fields correctly!");
         return;
       }
@@ -52,81 +62,94 @@
       }
 
       const percent = ((attended / total) * 100).toFixed(2);
-      const status = percent >= 75 ? "Eligible ✅" : "Not Eligible ❌";
+      const status = percent >= 75 ? "Eligible" : "Not Eligible";
 
-      const student = { roll, name, total, attended, percent, status };
-      students.push(student);
+      students.push({
+        roll, name, subject, total, attended, percent, status
+      });
 
-      const row = `<tr>
-        <td>${roll}</td>
-        <td>${name}</td>
-        <td>${total}</td>
-        <td>${attended}</td>
-        <td>${percent}%</td>
-        <td>${status}</td>
-      </tr>`;
-      document.getElementById('output').innerHTML += row;
+      displayStudents();
+    }
 
-      // clear fields
-      document.getElementById('roll').value = '';
-      document.getElementById('name').value = '';
-      document.getElementById('total').value = '';
-      document.getElementById('attended').value = '';
+    function displayStudents() {
+      const tbody = document.getElementById('output');
+      tbody.innerHTML = "";
+
+      students.forEach((s, index) => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${s.roll}</td>
+            <td>${s.name}</td>
+            <td>${s.subject}</td>
+            <td>${s.total}</td>
+            <td>${s.attended}</td>
+            <td>${s.percent}%</td>
+            <td>${s.status}</td>
+            <td><button onclick="markAttendance(${index})">Mark +1</button></td>
+          </tr>
+        `;
+      });
+    }
+
+    function markAttendance(index) {
+      students[index].attended += 1;
+
+      students[index].percent = ((students[index].attended / students[index].total) * 100).toFixed(2);
+      students[index].status = students[index].percent >= 75 ? "Eligible" : "Not Eligible";
+
+      displayStudents();
     }
 
     function generateReport() {
       if (students.length === 0) {
-        alert("No data available to generate report!");
+        alert("No students added!");
         return;
       }
 
-      let totalClasses = 0;
-      let totalAttended = 0;
+      let totalClasses = students.reduce((sum, s) => sum + s.total, 0);
+      let totalAttended = students.reduce((sum, s) => sum + s.attended, 0);
+      let avgPercentage = ((totalAttended / totalClasses) * 100).toFixed(2);
 
-      students.forEach(s => {
-        totalClasses += s.total;
-        totalAttended += s.attended;
-      });
-
-      const avgPercentage = ((totalAttended / totalClasses) * 100).toFixed(2);
-
-      // Generate student-wise report table
-      let studentReport = `<table border="1" cellspacing="0" cellpadding="5" style="margin:auto;">
-        <tr>
-          <th>Roll No</th>
-          <th>Student</th>
-          <th>Total</th>
-          <th>Attended</th>
-          <th>Percentage</th>
-          <th>Status</th>
-        </tr>`;
-
-      students.forEach(s => {
-        studentReport += `<tr>
-          <td>${s.roll}</td>
-          <td>${s.name}</td>
-          <td>${s.total}</td>
-          <td>${s.attended}</td>
-          <td>${s.percent}%</td>
-          <td>${s.status}</td>
-        </tr>`;
-      });
-
-      studentReport += `</table>`;
-
-      const reportHTML = `
+      let table = `
         <h2>📊 Attendance Report</h2>
         <p><strong>Total Students:</strong> ${students.length}</p>
-        <p><strong>Total Classes:</strong> ${totalClasses}</p>
-        <p><strong>Total Attended:</strong> ${totalAttended}</p>
+        <p><strong>Total Classes (Combined):</strong> ${totalClasses}</p>
+        <p><strong>Total Attended (Combined):</strong> ${totalAttended}</p>
         <p><strong>Overall Average Attendance:</strong> ${avgPercentage}%</p>
+
         <h3>Student-wise Details:</h3>
-        ${studentReport}
+
+        <table>
+          <tr>
+            <th>Roll</th>
+            <th>Name</th>
+            <th>Subject</th>
+            <th>Total</th>
+            <th>Attended</th>
+            <th>Percentage</th>
+            <th>Status</th>
+          </tr>
       `;
 
-      document.getElementById('report').innerHTML = reportHTML;
+      students.forEach(s => {
+        table += `
+          <tr>
+            <td>${s.roll}</td>
+            <td>${s.name}</td>
+            <td>${s.subject}</td>
+            <td>${s.total}</td>
+            <td>${s.attended}</td>
+            <td>${s.percent}%</td>
+            <td>${s.status}</td>
+          </tr>
+        `;
+      });
+
+      table += "</table>";
+
+      document.getElementById("report").innerHTML = table;
     }
   </script>
+
 </body>
 </html>
-
