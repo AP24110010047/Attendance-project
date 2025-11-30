@@ -1,28 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Attendance</title>
-  <style>
-    table, th, td {
-      border: 1px solid black;
-      border-collapse: collapse;
-      padding: 5px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Attendance</title>
+<style>
+  body {
+    text-align: center;
+    font-family: Arial, sans-serif;
+    background: #e7f0ff;
+  }
+  .container {
+    width: 80%;
+    margin: auto;
+  }
+  h1 {
+    color: #003399;
+    font-size: 32px;
+    margin-bottom: 20px;
+  }
+  input {
+    padding: 8px;
+    margin: 5px;
+    border: 1px solid #0066cc;
+    border-radius: 5px;
+  }
+  button {
+    padding: 8px 12px;
+    margin: 5px;
+    background: #0066cc;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #004c99;
+  }
+  table {
+    margin: auto;
+    width: 90%;
+    background: white;
+  }
+  table, th, td {
+    border: 1px solid #004c99;
+    border-collapse: collapse;
+    padding: 8px;
+  }
+  .eligible {
+    background-color: #d4edda;
+  }
+  .not-eligible {
+    background-color: #f8d7da;
+  }
+  .edit-box {
+    background: white;
+    padding: 20px;
+    border: 2px solid #0066cc;
+    width: 300px;
+    margin: 20px auto;
+    border-radius: 10px;
+  }
+</style>
 </head>
 <body>
+<div class="container">
   <h1>Student Attendance System</h1>
 
+  <!-- Input Fields -->
   <input type="text" id="roll" placeholder="Enter Roll Number">
   <input type="text" id="name" placeholder="Enter Student Name">
   <input type="text" id="subject" placeholder="Enter Subject">
+  <br>
   <input type="number" id="total" placeholder="Total Classes">
   <input type="number" id="attended" placeholder="Classes Attended">
+  <br>
   <button onclick="addStudent()">Add Student</button>
   <button onclick="generateReport()">Generate Report</button>
 
+  <!-- Table -->
   <table>
     <thead>
       <tr>
@@ -31,53 +87,67 @@
         <th>Subject</th>
         <th>Total</th>
         <th>Attended</th>
-        <th>Percentage</th>
+        <th>%</th>
         <th>Status</th>
-        <th>Action</th>
+        <th>Present</th>
+        <th>Absent</th>
+        <th>Edit</th>
+        <th>Delete</th>
       </tr>
     </thead>
     <tbody id="output"></tbody>
   </table>
 
+  <!-- Edit Box -->
+  <div id="editBox" style="display:none;" class="edit-box">
+    <h3>Edit Student</h3>
+    <input id="editName" placeholder="Name"><br><br>
+    <input id="editSubject" placeholder="Subject"><br><br>
+    <input id="editTotal" type="number" placeholder="Total"><br><br>
+    <input id="editAttended" type="number" placeholder="Attended"><br><br>
+    <button onclick="saveEdit()">Save</button>
+    <button onclick="cancelEdit()">Cancel</button>
+  </div>
+
   <div id="report" style="margin-top: 30px;"></div>
+</div>
 
-  <script>
-    let students = [];
+<script>
+let students = [];
+let editIndex = -1;
 
-    function addStudent() {
-      const roll = document.getElementById('roll').value.trim();
-      const name = document.getElementById('name').value.trim();
-      const subject = document.getElementById('subject').value.trim();
-      const total = parseInt(document.getElementById('total').value);
-      const attended = parseInt(document.getElementById('attended').value);
+function addStudent() {
+    const roll = document.getElementById('roll').value.trim();
+    const name = document.getElementById('name').value.trim();
+    const subject = document.getElementById('subject').value.trim();
+    const total = parseInt(document.getElementById('total').value);
+    const attended = parseInt(document.getElementById('attended').value);
 
-      if (!roll || !name || !subject || isNaN(total) || isNaN(attended) || total <= 0) {
-        alert("Please fill all fields correctly!");
+    if (!roll || !name || !subject || isNaN(total) || isNaN(attended)) {
+        alert("Fill all fields!");
         return;
-      }
-
-      if (students.some(s => s.roll === roll)) {
-        alert("Roll Number already exists!");
-        return;
-      }
-
-      const percent = ((attended / total) * 100).toFixed(2);
-      const status = percent >= 75 ? "Eligible" : "Not Eligible";
-
-      students.push({
-        roll, name, subject, total, attended, percent, status
-      });
-
-      displayStudents();
     }
 
-    function displayStudents() {
-      const tbody = document.getElementById('output');
-      tbody.innerHTML = "";
+    // Allow same roll number with different subject
+    if (students.some(s => s.roll === roll && s.subject === subject)) {
+        alert("Student with this Roll No. and Subject already exists!");
+        return;
+    }
 
-      students.forEach((s, index) => {
+    const percent = ((attended / total) * 100).toFixed(2);
+    const status = percent >= 75 ? "Eligible" : "Not Eligible";
+
+    students.push({ roll, name, subject, total, attended, percent, status });
+    displayStudents();
+}
+
+function displayStudents() {
+    const tbody = document.getElementById('output');
+    tbody.innerHTML = "";
+
+    students.forEach((s, index) => {
         tbody.innerHTML += `
-          <tr>
+        <tr class="${s.status === 'Eligible' ? 'eligible' : 'not-eligible'}">
             <td>${s.roll}</td>
             <td>${s.name}</td>
             <td>${s.subject}</td>
@@ -85,71 +155,91 @@
             <td>${s.attended}</td>
             <td>${s.percent}%</td>
             <td>${s.status}</td>
-            <td><button onclick="markAttendance(${index})">Mark +1</button></td>
-          </tr>
-        `;
-      });
+            <td><button onclick="markPresent(${index})">Present</button></td>
+            <td><button onclick="markAbsent(${index})">Absent</button></td>
+            <td><button onclick="editStudent(${index})">Edit</button></td>
+            <td><button onclick="deleteStudent(${index})">Delete</button></td>
+        </tr>`;
+    });
+}
+
+function markPresent(index) {
+    students[index].attended++;
+    students[index].total++;
+    updateStudent(index);
+}
+
+function markAbsent(index) {
+    students[index].total++;
+    updateStudent(index);
+}
+
+function updateStudent(index) {
+    let s = students[index];
+    s.percent = ((s.attended / s.total) * 100).toFixed(2);
+    s.status = s.percent >= 75 ? "Eligible" : "Not Eligible";
+    displayStudents();
+}
+
+function deleteStudent(index) {
+    if (confirm("Are you sure you want to delete?")) {
+        students.splice(index, 1);
+        displayStudents();
     }
+}
 
-    function markAttendance(index) {
-      students[index].attended += 1;
+function editStudent(index) {
+    editIndex = index;
+    const s = students[index];
+    document.getElementById("editName").value = s.name;
+    document.getElementById("editSubject").value = s.subject;
+    document.getElementById("editTotal").value = s.total;
+    document.getElementById("editAttended").value = s.attended;
+    document.getElementById("editBox").style.display = "block";
+}
 
-      students[index].percent = ((students[index].attended / students[index].total) * 100).toFixed(2);
-      students[index].status = students[index].percent >= 75 ? "Eligible" : "Not Eligible";
+function saveEdit() {
+    const s = students[editIndex];
+    const newName = document.getElementById("editName").value;
+    const newSubject = document.getElementById("editSubject").value;
+    const newTotal = parseInt(document.getElementById("editTotal").value);
+    const newAttended = parseInt(document.getElementById("editAttended").value);
 
-      displayStudents();
-    }
-
-    function generateReport() {
-      if (students.length === 0) {
-        alert("No students added!");
+    // Prevent duplicate roll+subject after edit
+    if (students.some((st, idx) => idx !== editIndex && st.roll === s.roll && st.subject === newSubject)) {
+        alert("Student with this Roll No. and Subject already exists!");
         return;
-      }
+    }
 
-      let totalClasses = students.reduce((sum, s) => sum + s.total, 0);
-      let totalAttended = students.reduce((sum, s) => sum + s.attended, 0);
-      let avgPercentage = ((totalAttended / totalClasses) * 100).toFixed(2);
+    s.name = newName;
+    s.subject = newSubject;
+    s.total = newTotal;
+    s.attended = newAttended;
+    s.percent = ((s.attended / s.total) * 100).toFixed(2);
+    s.status = s.percent >= 75 ? "Eligible" : "Not Eligible";
 
-      let table = `
+    document.getElementById("editBox").style.display = "none";
+    displayStudents();
+}
+
+function cancelEdit() {
+    document.getElementById("editBox").style.display = "none";
+}
+
+function generateReport() {
+    let totalClasses = students.reduce((sum, s) => sum + s.total, 0);
+    let totalAttended = students.reduce((sum, s) => sum + s.attended, 0);
+    let avgPercentage = ((totalAttended / totalClasses) * 100).toFixed(2);
+
+    let html = `
         <h2>📊 Attendance Report</h2>
         <p><strong>Total Students:</strong> ${students.length}</p>
-        <p><strong>Total Classes (Combined):</strong> ${totalClasses}</p>
-        <p><strong>Total Attended (Combined):</strong> ${totalAttended}</p>
-        <p><strong>Overall Average Attendance:</strong> ${avgPercentage}%</p>
-
-        <h3>Student-wise Details:</h3>
-
-        <table>
-          <tr>
-            <th>Roll</th>
-            <th>Name</th>
-            <th>Subject</th>
-            <th>Total</th>
-            <th>Attended</th>
-            <th>Percentage</th>
-            <th>Status</th>
-          </tr>
-      `;
-
-      students.forEach(s => {
-        table += `
-          <tr>
-            <td>${s.roll}</td>
-            <td>${s.name}</td>
-            <td>${s.subject}</td>
-            <td>${s.total}</td>
-            <td>${s.attended}</td>
-            <td>${s.percent}%</td>
-            <td>${s.status}</td>
-          </tr>
-        `;
-      });
-
-      table += "</table>";
-
-      document.getElementById("report").innerHTML = table;
-    }
-  </script>
-
+        <p><strong>Total Classes:</strong> ${totalClasses}</p>
+        <p><strong>Total Attended:</strong> ${totalAttended}</p>
+        <p><strong>Overall Average:</strong> ${avgPercentage}%</p>
+    `;
+    document.getElementById("report").innerHTML = html;
+}
+</script>
 </body>
 </html>
