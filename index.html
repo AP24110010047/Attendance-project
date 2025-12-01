@@ -87,6 +87,7 @@
         <th>Subject</th>
         <th>Total</th>
         <th>Attended</th>
+        <th>Absent</th>
         <th>%</th>
         <th>Status</th>
         <th>Present</th>
@@ -128,7 +129,6 @@ function addStudent() {
         return;
     }
 
-    // Allow same roll number with different subject
     if (students.some(s => s.roll === roll && s.subject === subject)) {
         alert("Student with this Roll No. and Subject already exists!");
         return;
@@ -136,8 +136,9 @@ function addStudent() {
 
     const percent = ((attended / total) * 100).toFixed(2);
     const status = percent >= 75 ? "Eligible" : "Not Eligible";
+    const absent = total - attended;
 
-    students.push({ roll, name, subject, total, attended, percent, status });
+    students.push({ roll, name, subject, total, attended, absent, percent, status });
     displayStudents();
 }
 
@@ -153,6 +154,7 @@ function displayStudents() {
             <td>${s.subject}</td>
             <td>${s.total}</td>
             <td>${s.attended}</td>
+            <td>${s.absent}</td>
             <td>${s.percent}%</td>
             <td>${s.status}</td>
             <td><button onclick="markPresent(${index})">Present</button></td>
@@ -178,6 +180,7 @@ function updateStudent(index) {
     let s = students[index];
     s.percent = ((s.attended / s.total) * 100).toFixed(2);
     s.status = s.percent >= 75 ? "Eligible" : "Not Eligible";
+    s.absent = s.total - s.attended;
     displayStudents();
 }
 
@@ -200,23 +203,19 @@ function editStudent(index) {
 
 function saveEdit() {
     const s = students[editIndex];
-    const newName = document.getElementById("editName").value;
-    const newSubject = document.getElementById("editSubject").value;
-    const newTotal = parseInt(document.getElementById("editTotal").value);
-    const newAttended = parseInt(document.getElementById("editAttended").value);
+    s.name = document.getElementById("editName").value;
+    s.subject = document.getElementById("editSubject").value;
+    s.total = parseInt(document.getElementById("editTotal").value);
+    s.attended = parseInt(document.getElementById("editAttended").value);
 
-    // Prevent duplicate roll+subject after edit
-    if (students.some((st, idx) => idx !== editIndex && st.roll === s.roll && st.subject === newSubject)) {
+    if (students.some((st, idx) => idx !== editIndex && st.roll === s.roll && st.subject === s.subject)) {
         alert("Student with this Roll No. and Subject already exists!");
         return;
     }
 
-    s.name = newName;
-    s.subject = newSubject;
-    s.total = newTotal;
-    s.attended = newAttended;
     s.percent = ((s.attended / s.total) * 100).toFixed(2);
     s.status = s.percent >= 75 ? "Eligible" : "Not Eligible";
+    s.absent = s.total - s.attended;
 
     document.getElementById("editBox").style.display = "none";
     displayStudents();
@@ -236,6 +235,7 @@ function generateReport() {
         <p><strong>Total Students:</strong> ${students.length}</p>
         <p><strong>Total Classes:</strong> ${totalClasses}</p>
         <p><strong>Total Attended:</strong> ${totalAttended}</p>
+        <p><strong>Total Absent:</strong> ${totalClasses - totalAttended}</p>
         <p><strong>Overall Average:</strong> ${avgPercentage}%</p>
     `;
     document.getElementById("report").innerHTML = html;
